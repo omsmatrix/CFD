@@ -5,6 +5,8 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
+#include <algorithm>
+#include <numeric>
 using namespace std;
 
 int main()
@@ -41,13 +43,18 @@ int main()
         //std::cout << y << " " << z << " 0" << endl;
     }
 
-    double npoin,nelem, ip1, ip2, ip3, loc1_x, loc1_y, loc2_x, loc2_y, loc3_x, loc3_y, D;
+    double npoin, nelem, ip1, ip2, ip3, loc1_x, loc1_y, loc2_x, loc2_y, loc3_x, loc3_y, D;
 
     npoin = x.size();
     nelem = elem.size();
 
     //Initailization of global stifness matrix
     vector<vector<double>> lhspo(npoin, vector<double>(npoin, 0));
+    vector<double> D_mat(npoin, 0);
+    vector<double> phi(npoin, 0);
+    vector<double> phi_old(npoin, 0);
+    vector<double> phi_new(npoin, 0);
+    vector<double> diff(npoin, 0);
 
     //cout << lhspo.size() << "\n";
     //cout << x.size() << "\n";
@@ -57,27 +64,26 @@ int main()
     //cout << loc1_x;
     //loc1_x = x[con1[]];
 
-
     for (int i = 0; i < nelem; i++)
     {
         ip1 = con1[i];
         ip2 = con2[i];
         ip3 = con3[i];
-//        cout << i << " \t";
+        //        cout << i << " \t";
 
-//        loc1_x = x[con1[i]-1];
-//        cout << loc1_x << "\n";
+        //        loc1_x = x[con1[i]-1];
+        //        cout << loc1_x << "\n";
 
 
-        //local nodes data
-        loc1_x = x[con1[i]-1];
-        loc1_y = y[con1[i]-1];
+                //local nodes data
+        loc1_x = x[con1[i] - 1];
+        loc1_y = y[con1[i] - 1];
 
-        loc2_x = x[con2[i]-1];
-        loc2_y = y[con2[i]-1];
+        loc2_x = x[con2[i] - 1];
+        loc2_y = y[con2[i] - 1];
 
-        loc3_x = x[con3[i]-1];
-        loc3_y = y[con3[i]-1];
+        loc3_x = x[con3[i] - 1];
+        loc3_y = y[con3[i] - 1];
 
         D = loc1_x * (loc2_y - loc3_y) - loc1_y * (loc2_x - loc3_x) + (loc2_x * loc3_y - loc2_y * loc3_x);
 
@@ -86,32 +92,46 @@ int main()
         ip3 = ip3 - 1;
 
 
-
         //Element Matrix
         lhspo[ip1][ip1] = lhspo[ip1][ip1] + (((loc2_y - loc3_y) * (loc2_y - loc3_y) + (loc2_x - loc3_x) * (loc2_x - loc3_x)) / (2 * D));
         lhspo[ip1][ip2] = lhspo[ip1][ip2] + (((loc2_y - loc3_y) * (loc3_y - loc1_y) + (loc2_x - loc3_x) * (loc3_x - loc1_x)) / (2 * D));
         lhspo[ip1][ip3] = lhspo[ip1][ip3] + (((loc2_y - loc3_y) * (loc1_y - loc2_y) + (loc2_x - loc3_x) * (loc1_x - loc2_x)) / (2 * D));
-        lhspo[ip2][ip1] = lhspo[ip2][ip1] + (((loc3_y - loc2_y) * (loc2_y - loc3_y) + (loc3_x - loc2_x) * (loc2_x - loc3_x)) / (2 * D));
-        lhspo[ip2][ip2] = lhspo[ip2][ip2] + (((loc3_y - loc2_y) * (loc3_y - loc1_y) + (loc3_x - loc2_x) * (loc3_x - loc1_x)) / (2 * D));
-        lhspo[ip2][ip3] = lhspo[ip2][ip3] + (((loc3_y - loc2_y) * (loc1_y - loc2_y) + (loc3_x - loc2_x) * (loc1_x - loc2_x)) / (2 * D));
+        lhspo[ip2][ip1] = lhspo[ip2][ip1] + (((loc3_y - loc1_y) * (loc2_y - loc3_y) + (loc3_x - loc1_x) * (loc2_x - loc3_x)) / (2 * D));
+        lhspo[ip2][ip2] = lhspo[ip2][ip2] + (((loc3_y - loc1_y) * (loc3_y - loc1_y) + (loc3_x - loc1_x) * (loc3_x - loc1_x)) / (2 * D));
+        lhspo[ip2][ip3] = lhspo[ip2][ip3] + (((loc3_y - loc1_y) * (loc1_y - loc2_y) + (loc3_x - loc1_x) * (loc1_x - loc2_x)) / (2 * D));
         lhspo[ip3][ip1] = lhspo[ip3][ip1] + (((loc1_y - loc2_y) * (loc2_y - loc3_y) + (loc1_x - loc2_x) * (loc2_x - loc3_x)) / (2 * D));
         lhspo[ip3][ip2] = lhspo[ip3][ip2] + (((loc1_y - loc2_y) * (loc3_y - loc1_y) + (loc1_x - loc2_x) * (loc3_x - loc1_x)) / (2 * D));
         lhspo[ip3][ip3] = lhspo[ip3][ip3] + (((loc1_y - loc2_y) * (loc1_y - loc2_y) + (loc1_x - loc2_x) * (loc1_x - loc2_x)) / (2 * D));
 
     }
 
+    // Saving Diagonal Matrix
 
-    
+    for (int i = 0; i < npoin; i++)
+    {
+        for (int j = 0; j < npoin; j++)
+        {
+            if (i == j)
+            {
+                D_mat[i] = lhspo[i][j];
+                //cout << D_mat[i] << "\n";
+            }
+        }
+
+    }
+
+
+
     ifstream finn2("C:\\Users\\omjag\\Downloads\\Boundary_Faces.txt");
 
-    double aa, bb, cc, dd, ee, ff, nbface, len, xx, yy;
+    double aa, bb, cc, dd, ee, ff, nbface, len, xx, yy, m;
     std::vector<double> bface;
     std::vector<double> bcon1;
     std::vector<double> bcon2;
     std::vector<double> vb;
 
 
-    
+
     while (finn2 >> aa >> bb >> cc >> dd >> ee >> ff)
     {
         bface.push_back(aa);
@@ -120,14 +140,14 @@ int main()
         vb.push_back(ee);
         //std::cout << y << " " << z << " 0" << endl;
     }
-    
+
     nbface = bface.size();
-    vector<vector<double>> rhspo(npoin, vector<double>(1, 0));
-    
+    vector<double> rhspo(npoin, 0);
+    vector<double> Z(npoin, 0);
 
     //cout << nbface;
     //cout << rhspo[0][0];
-    
+
     for (int i = 0; i < nbface; i++)
     {
 
@@ -138,22 +158,113 @@ int main()
         loc2_x = x[bcon2[i] - 1];
         loc2_y = y[bcon2[i] - 1];
 
-        len = sqrt(pow((loc2_y-loc1_y),2) + pow((loc2_x - loc1_x), 2));
+        len = sqrt(pow((loc2_y - loc1_y), 2) + pow((loc2_x - loc1_x), 2));
 
         xx = bcon1[i] - 1;
         yy = bcon2[i] - 1;
 
-        
+        m = atan2(-(loc2_x - loc1_x) , (loc2_y - loc1_y));
+
         //Element Matrix
         if (vb[i] == 1)
         {
-        rhspo[xx][0] = rhspo[xx][0] + ((vb[i] * len) / 2);
-        rhspo[yy][0] = rhspo[yy][0] + ((vb[i] * len) / 2);
-        //cout << yy << " " << bcon2[i] << "\n";
-        //cout << vb[i];
+            rhspo[xx] = rhspo[xx] + ((cos(m) * vb[i] * len) / 2);
+            rhspo[yy] = rhspo[yy] + ((cos(m) * vb[i] * len) / 2);
+            // rhspo[xx] = rhspo[xx] + ((((loc2_y - loc1_y) / abs(loc2_y - loc1_y)) * vb[i] * len) / 2);
+           // rhspo[yy] = rhspo[yy] + ((((loc2_y - loc1_y) / abs(loc2_y - loc1_y)) * vb[i] * len) / 2);
+            //cout << yy << " " << bcon2[i] << "\n";
+            //cout << vb[i];
         }
     }
+
+
+    // Initialize Phi values
+
+    double  Vinf = 1;
+
+    for (int i = 0; i < npoin; i++)
+    {
+        phi[i] = Vinf * x[i];
+        //cout << phi_old[i] << "\n";
+    }
+
+
+
+
+    // Jacobian Iteration Method
+    double Res;
+    std::vector<double> res; //residual vector
+    res.resize(npoin, 0); //init residual
+
+/*       for (int i = 0; i < npoin; i++)
+       {
+           for (int j =0; j < npoin; j++)
+           {
+               Z[i] = Z[i] + lhspo[i][j] * phi[j];
+           }
+           cout << Z[i] << "\n";
+       }
+  */ 
+
+
+
+
+
+
+
+
+
+
+
+ //   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    for (int k = 0; k < 2000; k++)
+    {
+        double sum = 0;
+        //sum = 0;
+        //cout << Z[i] << "\n";
+
+        for (int j = 0; j < npoin; j++)
+        {
+            //cout << phi_old[j] << "\t" << phi[j] << "\n";\
+            
+
+
+
+
+            phi_old[j] = phi[j];
+        //  Z[j] = std::inner_product(lhspo[j].begin(), lhspo[j].end(), phi.begin(), 0);
+            Z[j] = 0;
+            for (int i = 0; i < npoin; i++)
+            {
+                Z[j] = Z[j] + lhspo[j][i] * phi[i];
+            }
+            //cout << Z[j] << "\n";
+            //cout << loc_var1 << "\n";
+
+            
+            phi[j] = ((rhspo[j] - Z[j]) / D_mat[j]) + phi[j];
+            res[j] = phi[j] - phi_old[j];
+            //diff[j] = pow((phi[j] - phi_old[j]), 2);
+            //sum = sum + diff[j];
+            // Res = sqrt(sum) / npoin;
+            //cout << Res << "\n";
+        }
+        
+        for (int i = 1; i < npoin; i++)
+        {
+            sum = sum + sqrt(pow(res[i], 2));
+        }
+        sum = sum / npoin;
+        cout << sum << endl;
+       
+
+    }
     
+    
+
+
+
+/*
 
     // Cholesky Decomposition
     vector<vector<double>> L(npoin, vector<double>(npoin, 0));
@@ -195,7 +306,9 @@ int main()
         }
     }
 
+*/
 
+    // 
 
 
 
@@ -244,7 +357,7 @@ int main()
     {
         for (int i = 0; i < npoin; i++)
         {
-            fw1 << rhspo[i][0] << "\t";
+            fw1 << rhspo[i] << "\t";
             fw1 << "\n";
         }
         fw1.close();

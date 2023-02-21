@@ -1,0 +1,43 @@
+/*
+
+    // Cholesky Decomposition
+    vector<vector<double>> L(npoin, vector<double>(npoin, 0));
+
+    for (int k = 0; k < npoin; k++)
+    {
+        for (int i = 0; i < npoin; i++)
+        {
+
+            if (k == i)
+            {
+                double var1 = 0, var2;
+                for (int j = 0; j < i; j++)
+                {
+                    var2 = L[k][j];
+                    var1 = var1 + pow(var2, 2);
+                }
+                L[k][k] = L[k][k] + sqrt(lhspo[k][k] - var1);
+            }
+            else
+            {
+                double var1 = 0;
+                for (int j = 0; j < i; j++)
+                {
+                    var1 = var1 + L[i][j] * L[k][j];
+                }
+                if (L[i][i] == 0)
+                {
+                    L[k][i] = 0;
+                }
+                else
+                {
+                    L[k][i] = L[k][i] + (lhspo[k][i] - var1) / L[i][i];
+                }
+
+            }
+
+
+        }
+    }
+
+*/

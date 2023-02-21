@@ -260,8 +260,81 @@ int main()
 
     }
     
-    
+    double a1, a2, a3, b1, b2, b3;
+    vector<vector<double>> Vx_temp(npoin, vector<double>(nelem, 0));
+    vector<vector<double>> Wt_temp(npoin, vector<double>(nelem, 0));
+    vector<vector<double>> Vy_temp(npoin, vector<double>(nelem, 0));
 
+    for (int i = 0; i < nelem; i++) 
+    {
+        ip1 = con1[i];
+        ip2 = con2[i];
+        ip3 = con3[i];
+        //cout << i << " \t";
+
+        //loc1_x = x[con1[i]-1];
+        //cout << loc1_x << "\n";
+        //local nodes data
+
+        loc1_x = x[con1[i] - 1];
+        loc1_y = y[con1[i] - 1];
+
+        loc2_x = x[con2[i] - 1];
+        loc2_y = y[con2[i] - 1];
+
+        loc3_x = x[con3[i] - 1];
+        loc3_y = y[con3[i] - 1];
+
+        a1 = loc2_y - loc3_y;
+        a2 = loc3_y - loc1_y;
+        a3 = loc1_y - loc2_y;
+
+        b1 = loc2_x - loc3_x;
+        b2 = loc3_x - loc1_x;
+        b3 = loc1_x - loc2_x;
+
+        D = loc1_x * (loc2_y - loc3_y) - loc1_y * (loc2_x - loc3_x) + (loc2_x * loc3_y - loc2_y * loc3_x);
+
+        ip1 = ip1 - 1;
+        ip2 = ip2 - 1;
+        ip3 = ip3 - 1;
+
+        Vx_temp[ip1][i] = (phi[ip1] * (a1 / D)) + (phi[ip2] * (a2 / D)) + (phi[ip3] * (a3 / D));
+        Vx_temp[ip2][i] = Vx_temp[ip1][i];
+        Vx_temp[ip3][i] = Vx_temp[ip1][i];
+
+        Vy_temp[ip1][i] = (phi[ip1] * (b1 / D)) + (phi[ip2] * (b2 / D)) + (phi[ip3] * (b3 / D));
+        Vy_temp[ip2][i] = Vy_temp[ip1][i];
+        Vy_temp[ip3][i] = Vy_temp[ip1][i];
+
+
+        Wt_temp[ip1][i] = D / 2;
+        Wt_temp[ip2][i] = D / 2;
+        Wt_temp[ip3][i] = D / 2;
+
+    }
+
+    vector<double> Vx(npoin, 0);
+    vector<double> Vy(npoin, 0);
+    vector<double> Vz(npoin, 0);
+
+    for(int i =0; i<npoin;i++)
+    {
+        double loc_var1 = 0;
+        double loc_var2 = 0;
+        double loc_var3 = 0;
+
+        for (int j = 0; j< nelem ; j++)
+        {
+            loc_var1 = loc_var1 + (Vx_temp[i][j] * Wt_temp[i][j]);
+            loc_var2 = loc_var2 + (Vy_temp[i][j] * Wt_temp[i][j]);
+            loc_var3 = loc_var3 + Wt_temp[i][j];
+        }
+
+        Vx[i] = loc_var1 / loc_var3;
+        Vy[i] = loc_var2 / loc_var3;
+
+    }
 
 
 /*
@@ -361,6 +434,40 @@ int main()
             fw1 << "\n";
         }
         fw1.close();
+    }
+
+    else cout << "Problem with opening file";
+
+
+    /// Printing out Phi
+    ofstream
+        fw2("C:\\Users\\omjag\\Downloads\\phi.txt");
+    std::ofstream::out;
+
+    if (fw2.is_open())
+    {
+        for (int i = 0; i < npoin; i++)
+        {
+            fw2 << phi[i];
+            fw2 << "\n";
+        }
+        fw2.close();
+    }
+
+    else cout << "Problem with opening file";
+
+    ofstream
+        fw3("C:\\Users\\omjag\\Downloads\\Vx_Vy.txt");
+    std::ofstream::out;
+
+    if (fw3.is_open())
+    {
+        for (int i = 0; i < npoin; i++)
+        {
+            fw3 << Vx[i] << " " << Vy[i] << " " << Vz[i];
+            fw3 << "\n";
+        }
+        fw3.close();
     }
 
     else cout << "Problem with opening file";

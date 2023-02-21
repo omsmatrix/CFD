@@ -11,7 +11,7 @@ using namespace std;
 
 int main()
 {
-    ifstream fin("C:\\Users\\omjag\\Downloads\\connectivity.txt");
+    ifstream fin("C:\\Users\\omjag\\Downloads\\Cy_2_Connectivity.txt");
     double a, b, c, d, e, f, g, h, i, j, k, l;
 
     std::vector<double> elem;
@@ -24,7 +24,7 @@ int main()
 
 
 
-    while (fin >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l)
+    while (fin >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k)
     {
         elem.push_back(a);
         con1.push_back(b);
@@ -33,7 +33,7 @@ int main()
         //std::cout << a << " " << b << " " << c << " " << d << endl;
     }
 
-    ifstream finn1("C:\\Users\\omjag\\Downloads\\coordinates.txt");
+    ifstream finn1("C:\\Users\\omjag\\Downloads\\Cy_2_Corrdinates.txt");
     double cor1, cor2, cor3;
 
     while (finn1 >> cor1 >> cor2 >> cor3)
@@ -122,12 +122,13 @@ int main()
 
 
 
-    ifstream finn2("C:\\Users\\omjag\\Downloads\\Boundary_Faces.txt");
+    ifstream finn2("C:\\Users\\omjag\\Downloads\\Cy_2_Boundary_Faces.txt");
 
     double aa, bb, cc, dd, ee, ff, nbface, len, xx, yy, m;
     std::vector<double> bface;
     std::vector<double> bcon1;
     std::vector<double> bcon2;
+    std::vector<double> bc;
     std::vector<double> vb;
 
 
@@ -137,6 +138,7 @@ int main()
         bface.push_back(aa);
         bcon1.push_back(bb);
         bcon2.push_back(cc);
+        bc.push_back(dd);
         vb.push_back(ee);
         //std::cout << y << " " << z << " 0" << endl;
     }
@@ -166,7 +168,7 @@ int main()
         m = atan2(-(loc2_x - loc1_x) , (loc2_y - loc1_y));
 
         //Element Matrix
-        if (vb[i] == 1)
+        if (bc[i] == 4)
         {
             rhspo[xx] = rhspo[xx] + ((cos(m) * vb[i] * len) / 2);
             rhspo[yy] = rhspo[yy] + ((cos(m) * vb[i] * len) / 2);
@@ -205,15 +207,6 @@ int main()
            cout << Z[i] << "\n";
        }
   */ 
-
-
-
-
-
-
-
-
-
 
 
  //   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -336,6 +329,33 @@ int main()
 
     }
 
+    vector<double> Ur(npoin, 0);
+    vector<double> Ut(npoin, 0);
+    vector<double> Vr(npoin, 0);
+    vector<double> Vt(npoin, 0);
+    vector<double> Vmag(npoin, 0);
+    vector<double> Umag(npoin, 0);
+    vector<double> Er(npoin, 0);
+    double theta, r, sum = 0, Err;
+
+    for (int i = 0; i < npoin; i++)
+    {
+        r = sqrt(pow(x[i], 2)+pow(y[i], 2));
+        theta = atan2((y[i]), x[i]);
+
+        Ur[i] = cos(theta) * (1 - (0.7071 / (pow(r, 2))));
+        Ut[i] = -sin(theta) * (1 + (0.7071 / (pow(r, 2))));
+        Vr[i] = Vx[i] * cos(theta) + Vy[i] * sin(theta);
+        Vt[i] = Vx[i] * sin(theta) - Vy[i] * cos(theta);
+
+        Vmag[i] = sqrt(pow(Vr[i], 2) + pow(Vt[i], 2));
+        Umag[i] = sqrt(pow(Ur[i], 2) + pow(Ut[i], 2));
+        Er[i] = pow((Vmag[i] - Umag[i]), 2);
+        sum = sum + Er[i];
+    }
+    
+    Err = sqrt(sum)/npoin;
+    cout << Err;
 
 /*
 
@@ -472,6 +492,103 @@ int main()
 
     else cout << "Problem with opening file";
 
+    ofstream
+        fw4("C:\\Users\\omjag\\Downloads\\x_Vx_Vy.dat");
+    std::ofstream::out;
+    
+    if (fw4.is_open())
+    {
+        for (int i = 0; i < nbface; i++)
+        {
+            fw4 << x[bcon1[i] - 1] << " " << Vx[bcon1[i] - 1] << " " << Vy[bcon1[i] - 1];
+            fw4 << "\n";
+        }
+        fw4.close();
+    }
+
+    else cout << "Problem with opening file";
+
+    ofstream
+        fw6("C:\\Users\\omjag\\Downloads\\Cy_x_Vx_Vy.dat");
+    std::ofstream::out;
+
+    if (fw6.is_open())
+    {
+        for (int i = 0; i < nbface; i++)
+        {
+            if (bc[i] == 2)
+            {
+                fw6 << x[bcon1[i] - 1] << " " << sqrt(pow(Vx[bcon1[i] - 1],2) + pow(Vy[bcon1[i] - 1],2)) << "\n";
+                fw6 << "\n";
+            }
+            
+        }
+        fw6.close();
+    }
+
+    else cout << "Problem with opening file";
+
+
+    ofstream
+        fw5("C:\\Users\\omjag\\Downloads\\Cy_1_VTK.vtk");
+    std::ofstream::out;
+
+    if (fw5.is_open())
+    {
+        fw5 << "# vtk DataFile Version 2.0" << "\n";
+        fw5 << "Unstructured Grid" << "\n";
+        fw5 << "ASCII" << "\n";
+        fw5 << "DATASET UNSTRUCTURED_GRID" << "\n";
+        fw5 << "\n";
+        fw5 << "POINTS " << npoin << " float";
+        fw5 << "\n";
+        
+        for (int i = 0; i < npoin; i++)
+        {
+            fw5 << x[i] << " " << y[i] << " 0";
+            fw5 << "\n";
+        }
+
+        fw5 << "\n";
+        fw5 << "CELLS " << nelem << " " << (nelem * 4) << "\n";
+        
+        for (int i = 0; i < nelem; i++)
+        {
+            fw5 << 3 << " " << (con1[i] - 1) << " " << (con2[i] - 1) << " " << (con3[i] - 1) << "\n";
+        }
+
+        fw5 << "\n";
+        fw5 << "CELL_TYPES " << nelem << "\n";
+
+        for (int i = 0; i < nelem; i++)
+        {
+            fw5 << "5" << "\n";
+        }
+
+        fw5 << "\n";
+        fw5 << "POINT_DATA " << npoin << "\n";
+        fw5 << "SCALARS Velocity_Potential double 1" << "\n";
+        fw5 << "LOOKUP_TABLE default" << "\n";
+
+        for (int i = 0; i < npoin; i++)
+        {
+            fw5 << phi[i] << "\n";
+        }
+
+        fw5 << "\n";
+        fw5 << "FIELD FieldData 1" << "\n";
+        fw5 << "Velocity 3 " << npoin << " double" << "\n";
+
+        for (int i = 0; i < npoin; i++)
+        {
+            fw5 << Vx[i] << " " << Vy[i] << " 0" << "\n";
+        }
+
+
+        fw5.close();
+    }
+
+    else cout << "Problem with opening file";
 
 }
 
